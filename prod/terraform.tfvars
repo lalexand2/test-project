@@ -1,0 +1,11 @@
+origin_hostname = "prod.example.com"
+cp_code         = 1234567
+property_name   = "prod-property"
+contract_id     = "ctr_"
+group_id        = "grp_"
+hostname        = "prod-hostname"
+edge_hostname   = "prod-edge-hostname"
+env = "prod"
+property_version_notes = "Terraform update for prod environment"
+activate_latest_on_staging = false
+#activate_latest_on_production = false

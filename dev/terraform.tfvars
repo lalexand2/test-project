@@ -1,0 +1,11 @@
+origin_hostname = "dev.example.com"
+cp_code         = 1234567
+property_name   = "dev-property"
+contract_id     = "ctr_"
+group_id        = "grp_"
+hostname        = "dev-hostname"
+edge_hostname   = "dev-edge-hostname"
+env = "dev"
+property_version_notes = "Terraform update for dev environment"
+activate_latest_on_staging = false
+#activate_latest_on_production = false
