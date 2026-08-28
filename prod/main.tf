@@ -18,8 +18,8 @@ terraform {
 }
 
 provider "akamai" {
-  edgerc         = "~/.edgerc"
-  config_section = "tf"
+  #edgerc         = "~/.edgerc"
+  #config_section = "tf"
 }
 
 module "property" {
