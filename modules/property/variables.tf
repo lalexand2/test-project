@@ -8,5 +8,5 @@ variable "edge_hostname" { type = string }
 variable "env" { type = string }
 variable "property_version_notes" { type = string }
 variable "activate_latest_on_staging" { type = bool }
-#variable "activate_latest_on_production" { type = bool }
+variable "activate_latest_on_production" { type = bool }
 

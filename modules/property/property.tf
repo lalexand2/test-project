@@ -11,8 +11,8 @@ resource "akamai_property" "this" {
     cert_provisioning_type = "CPS_MANAGED"
   }
 
-  rule_format = data.akamai_property_rules_builder._rule_default.rule_format
-  rules = replace( data.akamai_property_rules_builder._rule_default.json, "\"rules\"", "\"comments\": \"${var.property_version_notes}\", \"rules\"")
+  rule_format = data.akamai_property_rules_builder.lalexand-amd-terra_prod_rule_default.rule_format
+  rules = replace( data.akamai_property_rules_builder.lalexand-amd-terra_prod_rule_default.json, "\"rules\"", "\"comments\": \"${var.property_version_notes}\", \"rules\"")
 }
 
 resource "akamai_edge_hostname" "this" {
@@ -41,13 +41,14 @@ resource "akamai_property_activation" "this-staging" {
 }
 
 # NOTE: Be careful when removing this resource as you can disable traffic
-#resource "akamai_property_activation" "lalexand-amd-terra_prod-production" {
-#  property_id                    = akamai_property.lalexand-amd-terra_prod.id
-#  contact                        = []
-#  version                        = var.activate_latest_on_production ? akamai_property.this.latest_version : akamai_property.this.production_version
-#  network                        = "PRODUCTION"
-#  auto_acknowledge_rule_warnings = false
-#}
+resource "akamai_property_activation" "this-production" {
+  property_id                    = akamai_property.this.id
+  contact                        = ["lalexand@akamai.com"]
+  version                        = var.activate_latest_on_production ? akamai_property.this.latest_version : akamai_property.this.production_version
+  network                        = "PRODUCTION"
+  note                           = "New terraform version"
+  auto_acknowledge_rule_warnings = false
+}
 
 
 
