@@ -7,7 +7,7 @@ data "akamai_property_rules_builder" "lalexand-amd-terra_prod_rule_caching" {
       caching {
         behavior                 = "CACHE_CONTROL_AND_EXPIRES"
         cache_control_directives = ""
-        default_ttl              = "5m"
+        default_ttl              = "6m"
         enhanced_rfc_support     = false
         honor_must_revalidate    = true
         honor_private            = true
