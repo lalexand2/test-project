@@ -4,89 +4,119 @@ on:
   pull_request:
     branches: [main]
     paths:
-     - 'dev/**' 
-     #- 'qa/**'
-     - 'prod/**'
-     - 'modules/**'
+      - 'dev/**'
+     # - 'qa/**'
+      - 'prod/**'
+      - 'modules/**'
   push:
     branches: [main]
     paths:
       - 'dev/**'
-      #- 'qa/**'
+    #- 'qa/**'
       - 'prod/**'
       - 'modules/**'
-
   workflow_dispatch:
 
-
 jobs:
+  # ── Job 1: figure out which environments changed ──────────────
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has_changes: ${{ steps.set-matrix.outputs.has_changes }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need history to diff against the previous commit
+
+      - name: Detect changed environments
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            dev:
+              - 'dev/**'
+              - 'modules/**'
+            #qa:
+            #  - 'qa/**'
+            #  - 'modules/**'            
+            prod:
+              - 'prod/**'
+              - 'modules/**'
+
+      - name: Build matrix from changes
+        id: set-matrix
+        run: |
+          envs=()
+          if [ "${{ steps.filter.outputs.dev }}" == "true" ]; then envs+=("dev"); fi
+          if [ "${{ steps.filter.outputs.prod }}" == "true" ]; then envs+=("prod"); fi
+
+          # On manual runs, default to all environments
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            envs=("dev" "prod")
+          fi
+
+          if [ ${#envs[@]} -eq 0 ]; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "matrix={\"environment\":[]}" >> "$GITHUB_OUTPUT"
+          else
+            json=$(printf '"%s",' "${envs[@]}")
+            json="[${json%,}]"
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "matrix={\"environment\":$json}" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── Job 2: run Terraform only for changed environments ────────
   terraform:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
 
-
-    # Run each environment as a separate parallel job
     strategy:
       fail-fast: false
-      matrix:
-        #environment: [dev, qa, prod]
-        environment: [dev, prod]   # ← must match actual folder names
+      matrix: ${{ fromJSON(needs.detect-changes.outputs.matrix) }}
 
-
-    # Prevents two runs of the SAME env from clobbering state,
-    # but lets different envs run at the same time
     concurrency:
       group: terraform-${{ matrix.environment }}
       cancel-in-progress: false
 
-
-    # Ties each matrix job to a GitHub Environment (for approvals)
     environment: ${{ matrix.environment }}
-
 
     defaults:
       run:
         working-directory: ./${{ matrix.environment }}
 
-
     env:
-     # Akamai provider credentials
       AKAMAI_CLIENT_SECRET: ${{ secrets.AKAMAI_CLIENT_SECRET }}
       AKAMAI_HOST:          ${{ secrets.AKAMAI_HOST }}
       AKAMAI_ACCESS_TOKEN:  ${{ secrets.AKAMAI_ACCESS_TOKEN }}
       AKAMAI_CLIENT_TOKEN:  ${{ secrets.AKAMAI_CLIENT_TOKEN }}
-      AKAMAI_ACCOUNT_KEY:  ${{ secrets.AKAMAI_ACCOUNT_KEY }}
-      # S3 backend (Linode Object Storage) credentials
+      AKAMAI_ACCOUNT_KEY:   ${{ secrets.AKAMAI_ACCOUNT_KEY }}
       AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.0
 
-
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
         continue-on-error: true
 
-
       - name: Terraform Init
         run: terraform init -reconfigure
-
 
       - name: Terraform Validate
         run: terraform validate
 
-
       - name: Terraform Plan
         run: terraform plan -out=tfplan -input=false
-
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
