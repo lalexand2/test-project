@@ -6,6 +6,6 @@ group_id                      = "grp_63802"
 hostname                      = "lalexand-amd-terra-prod.akamaized.net"
 edge_hostname                 = "lalexand-amd-terra-prod.akamaized.net"
 env                           = "prod"
-property_version_notes        = "Terraform update for prod environment - Aug 31 change Update 3"
+property_version_notes        = "Terraform update for prod environment - Aug 31 change Update 4"
 activate_latest_on_staging    = false
 activate_latest_on_production = false
