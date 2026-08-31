@@ -12,7 +12,7 @@ resource "akamai_property" "this" {
   }
 
   rule_format = data.akamai_property_rules_builder.lalexand-amd-terra_prod_rule_default.rule_format
-  rules = replace( data.akamai_property_rules_builder.lalexand-amd-terra_prod_rule_default.json, "\"rules\"", "\"comments\": \"${var.property_version_notes}\", \"rules\"")
+  rules       = replace(data.akamai_property_rules_builder.lalexand-amd-terra_prod_rule_default.json, "\"rules\"", "\"comments\": \"${var.property_version_notes}\", \"rules\"")
 }
 
 resource "akamai_edge_hostname" "this" {
