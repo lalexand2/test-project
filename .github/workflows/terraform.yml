@@ -5,14 +5,14 @@ on:
     branches: [main]
     paths:
      - 'dev/**' 
-     - 'qa/**'
+     #- 'qa/**'
      - 'prod/**'
      - 'modules/**'
   push:
     branches: [main]
     paths:
       - 'dev/**'
-      - 'qa/**'
+      #- 'qa/**'
       - 'prod/**'
       - 'modules/**'
 
@@ -28,7 +28,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: [dev, qa, prod]
+        #environment: [dev, qa, prod]
+        environment: [dev, prod]   # ← must match actual folder names
 
 
     # Prevents two runs of the SAME env from clobbering state,
