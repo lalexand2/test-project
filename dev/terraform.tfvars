@@ -6,6 +6,6 @@ group_id                      = "grp_63802"
 hostname                      = "lalexand-amd-terra-dev.akamaized.net"
 edge_hostname                 = "lalexand-amd-terra-dev.akamaized.net"
 env                           = "dev"
-property_version_notes        = "Terraform update for dev environment - Aug 31"
+property_version_notes        = "Terraform update for dev environment - Aug 31 changes"
 activate_latest_on_staging    = false
 activate_latest_on_production = false
