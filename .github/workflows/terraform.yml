@@ -1,34 +1,55 @@
-name: Terraform Prod
+name: Terraform Multi-Env
 
 on:
-  # Run plan on pull requests
   pull_request:
     branches: [main]
     paths:
-      - 'prod/**'
-      - 'modules/**'
-  # Run plan + apply when merged to main
+     - 'dev/**' 
+     #- 'qa/**'
+     - 'prod/**'
+     - 'modules/**'
   push:
     branches: [main]
     paths:
+      - 'dev/**'
+      #- 'qa/**'
       - 'prod/**'
       - 'modules/**'
-  # Allow manual runs from the Actions tab
+
   workflow_dispatch:
 
-# Prevent overlapping runs from corrupting state
-concurrency:
-  group: terraform-prod
-  cancel-in-progress: false
 
 jobs:
   terraform:
     runs-on: ubuntu-latest
+
+
+    # Run each environment as a separate parallel job
+    strategy:
+      fail-fast: false
+      matrix:
+        #environment: [dev, qa, prod]
+        environment: [dev, prod]   # ← must match actual folder names
+
+
+    # Prevents two runs of the SAME env from clobbering state,
+    # but lets different envs run at the same time
+    concurrency:
+      group: terraform-${{ matrix.environment }}
+      cancel-in-progress: false
+
+
+    # Ties each matrix job to a GitHub Environment (for approvals)
+    environment: ${{ matrix.environment }}
+
+
     defaults:
       run:
-        working-directory: ./prod
+        working-directory: ./${{ matrix.environment }}
+
+
     env:
-      # Akamai provider credentials
+     # Akamai provider credentials
       AKAMAI_CLIENT_SECRET: ${{ secrets.AKAMAI_CLIENT_SECRET }}
       AKAMAI_HOST:          ${{ secrets.AKAMAI_HOST }}
       AKAMAI_ACCESS_TOKEN:  ${{ secrets.AKAMAI_ACCESS_TOKEN }}
@@ -38,29 +59,35 @@ jobs:
       AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.0
 
+
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
         continue-on-error: true
 
+
       - name: Terraform Init
         run: terraform init -reconfigure
+
 
       - name: Terraform Validate
         run: terraform validate
 
+
       - name: Terraform Plan
         run: terraform plan -out=tfplan -input=false
 
-      # Apply only on push to main (not on pull requests)
+
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false tfplan
